@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Evernote-Style Notes (Colorful)</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1: #f5f3ff;
+    --accent-1: #7c3aed;
+    --accent-2: #ec4899;
+    --card: rgba(255,255,255,0.78);
+    --muted: #6b7280;
+    --glass: rgba(255,255,255,0.45);
+    --shadow: 0 6px 20px rgba(18,18,20,0.08);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    background: linear-gradient(135deg,#fdf4ff 0%, #fff7ed 35%, #eff6ff 100%);
+    color:#0f172a;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    line-height:1.3;
+  }
+
+  /* Container */
+  .app{
+    max-width:1200px;
+    margin:28px auto;
+    padding:20px;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    gap:18px;
+  }
+
+  /* Header */
+  header.app-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:14px 18px;
+    border-radius:16px;
+    background: linear-gradient(90deg,var(--accent-1), #6d28d9 30%, var(--accent-2));
+    color:white;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.14);
+    position:sticky;
+    top:18px;
+    z-index:10;
+  }
+  header .logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo-bubble{
+    width:44px;height:44px;border-radius:10px;
+    background:linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08));
+    display:flex;align-items:center;justify-content:center;font-weight:700;
+    box-shadow: 0 6px 18px rgba(99,102,241,0.12);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:0.2px}
+  .controls{margin-left:auto;display:flex;gap:10px;align-items:center}
+
+  .search{
+    display:flex;align-items:center;gap:8px;background:var(--card);
+    padding:6px;border-radius:10px;min-width:220px;box-shadow:var(--shadow);
+    border:1px solid rgba(15,23,42,0.04);
+  }
+  .search input{
+    border:0;background:transparent;outline:none;font-size:14px;width:100%;
+  }
+  .btn{
+    background:transparent;border:0;padding:8px 12px;border-radius:9px;font-weight:600;cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .btn.primary{
+    background:linear-gradient(90deg,#ff80bf,#7c3aed);color:white;border:0;
+  }
+  .hint{font-size:12px;color:rgba(255,255,255,0.9);opacity:0.95}
+
+  /* Layout columns */
+  .content{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:18px;
+    align-items:start;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,241,255,0.7));
+    border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); border:1px solid rgba(124,58,237,0.09);
+    min-height:420px; display:flex;flex-direction:column;
+  }
+  .sidebar .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .note-list{overflow:auto;flex:1;padding-right:6px;display:flex;flex-direction:column;gap:8px}
+  .note-card{
+    display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;cursor:pointer;
+    transition:all .18s ease;background:transparent;border:1px solid transparent;
+  }
+  .note-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(99,102,241,0.06)}
+  .note-card.active{background:linear-gradient(90deg, rgba(124,58,237,0.06), rgba(236,72,153,0.03));border:1px solid rgba(124,58,237,0.12)}
+  .note-meta{font-size:13px;font-weight:600}
+  .note-snippet{font-size:12px;color:var(--muted);max-height:36px;overflow:hidden;text-overflow:ellipsis}
+  .note-time{font-size:11px;color:#9ca3af;margin-left:auto}
+
+  .sidebar .actions{display:flex;gap:8px;margin-top:12px}
+  .small{font-size:13px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.6);border:1px solid rgba(15,23,42,0.04)}
+
+  /* Editor */
+  .editor{
+    background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,243,255,0.8));
+    border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); border:1px solid rgba(99,102,241,0.06);
+    min-height:420px; display:flex;flex-direction:column;
+  }
+  .editor .meta{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .editor input.title{
+    font-size:20px;font-weight:700;border:0;outline:none;background:transparent;width:100%;
+  }
+  .editor .updated{font-size:12px;color:var(--muted)}
+  .editor .body-area{display:flex;gap:12px;flex:1;align-items:stretch}
+  textarea.body{
+    flex:1;min-height:300px;padding:14px;border-radius:12px;border:1px solid rgba(15,23,42,0.04);
+    resize:none;background:linear-gradient(180deg,#fff,#fbfbff);font-size:14px;outline:none;
+  }
+  .preview{
+    width:36%;min-width:240px;background:var(--card);padding:12px;border-radius:12px;border:1px solid rgba(15,23,42,0.03);
+    overflow:auto;
+  }
+  .preview .label{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .no-note{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600}
+
+  /* Footer */
+  footer{font-size:12px;color:var(--muted);text-align:center;padding:8px 0}
+
+  /* Small screens */
+  @media (max-width:880px){
+    .content{grid-template-columns:1fr}
+    .preview{display:none}
+    .sidebar{order:2}
+    .editor{order:1}
+  }
+
+  /* subtle interactive touches */
+  .pulse{
+    animation:pulse 2.6s infinite;
+  }
+  @keyframes pulse{
+    0%{transform:translateY(0);opacity:1}
+    50%{transform:translateY(-3px);opacity:0.98}
+    100%{transform:translateY(0);opacity:1}
+  }
+
+  /* Markdown basics styling for preview */
+  .preview h1{font-size:18px;margin:6px 0;color:#0f172a}
+  .preview h2{font-size:16px;margin:6px 0}
+  .preview p{margin:6px 0;color:#334155;white-space:pre-wrap}
+  .preview code{background:#f3f4f6;padding:2px 6px;border-radius:6px;font-family:monospace}
+  .preview pre{background:#0b1220;color:#e6eef8;padding:10px;border-radius:8px;overflow:auto}
+  .link{color:#7c3aed;font-weight:600}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-bubble">N</div>
+      <div>
+        <div style="font-size:13px;opacity:0.95">Notes • Evernote-style MVP</div>
+        <div style="font-size:12px;opacity:0.9">Colorful • Local-only • Autosave</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search" title="Search notes (title or body)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M21 21l-4.35-4.35" stroke="white" stroke-opacity="0.9" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input type="search" id="searchInput" placeholder="Search notes..." />
+      </div>
+
+      <button class="btn primary" id="newBtn" title="New note (Ctrl/Cmd+N)">New Note</button>
+      <div class="hint">Ctrl/Cmd+N  ·  Ctrl/Cmd+S</div>
+    </div>
+  </header>
+
+  <section class="content">
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Notes sidebar">
+      <div class="head">
+        <div style="font-weight:700">Your Notes</div>
+        <div style="font-size:13px;color:var(--muted)" id="noteCount">0</div>
+      </div>
+
+      <div class="note-list" id="noteList">
+        <!-- JS inserts note cards here -->
+      </div>
+
+      <div class="actions" style="margin-top:12px;display:flex;justify-content:space-between">
+        <div style="display:flex;gap:8px">
+          <button class="small" id="sortNewest">Sort: Newest</button>
+          <button class="small" id="duplicateBtn" title="Duplicate active note">Duplicate</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="small" id="clearBtn" title="Clear all notes">Clear</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Editor -->
+    <main class="editor" role="main">
+      <div id="emptyState" class="no-note" style="display:none">Select or create a note</div>
+
+      <div id="editorUI" style="display:flex;flex-direction:column;height:100%">
+        <div class="meta">
+          <input class="title" id="noteTitle" placeholder="Title" />
+          <div class="updated" id="noteUpdated">—</div>
+        </div>
+
+        <div class="body-area" style="gap:12px;margin-top:8px;flex:1;min-height:200px">
+          <textarea class="body" id="noteBody" placeholder="Start writing your note..."></textarea>
+
+          <aside class="preview" aria-label="Preview">
+            <div class="label">Preview</div>
+            <div id="previewContent" class="rendered"></div>
+          </aside>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="small" id="deleteBtn">Delete</button>
+            <div style="font-size:13px;color:var(--muted)">Saved automatically</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted)" id="lastSave">—</div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <footer><span id="footerText">Evernote-Style MVP • Local-only (localStorage)</span></footer>
+</div>
+
+<script>
+/* ---------------------------
+   Notes App JS (no frameworks)
+   --------------------------- */
+(() => {
+  const STORAGE_KEY = 'evernote_mvp_notes_v1';
+  let notes = [];
+  let activeId = null;
+  let autosaveTimer = null;
+  const DEBOUNCE = 600;
+
+  // DOM refs
+  const noteListEl = document.getElementById('noteList');
+  const noteCountEl = document.getElementById('noteCount');
+  const searchInput = document.getElementById('searchInput');
+  const newBtn = document.getElementById('newBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const sortBtn = document.getElementById('sortNewest');
+  const duplicateBtn = document.getElementById('duplicateBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+
+  const emptyState = document.getElementById('emptyState');
+  const editorUI = document.getElementById('editorUI');
+  const titleInput = document.getElementById('noteTitle');
+  const bodyInput = document.getElementById('noteBody');
+  const previewEl = document.getElementById('previewContent');
+  const lastSaveEl = document.getElementById('lastSave');
+  const noteUpdatedEl = document.getElementById('noteUpdated');
+
+  // --- tiny markdown renderer (safe-ish, minimal) ---
+  function renderMarkdown(md){
+    if(!md) return '<div style="color:#94a3b8">Nothing to preview</div>';
+    // escape HTML
+    const esc = str => String(str).replace(/[&<>]/g, ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[ch]));
+    // simple block-level parsing
+    const lines = md.split('\\n');
+    let out = '';
+    let inList = false;
+    for (let raw of lines){
+      let line = raw.trim();
+      if (!line){ if(inList){ out += '</ul>'; inList=false } out += '<p><br></p>'; continue }
+      // headers
+      if (/^#{1,3}\\s+/.test(line)) {
+        const match = line.match(/^(#{1,3})\\s*(.*)$/);
+        const level = match[1].length;
+        out += `<h${level}>${esc(match[2])}</h${level}>`;
+        continue;
+      }
+      // unordered list
+      if (/^[-*]\\s+/.test(line)) {
+        if(!inList){ out += '<ul>'; inList = true; }
+        const li = line.replace(/^[-*]\\s+/, '');
+        out += `<li>${applyInline(esc(li))}</li>`;
+        continue;
+      }
+      // code block (``` fenced)
+      if (line.startsWith('```')) {
+        // Very minimal: find closing ```
+        const rest = md.split('```');
+        if(rest.length>=3){
+          const code = rest[1];
+          out += `<pre><code>${esc(code)}</code></pre>`;
+          // skip rest (simple) — this is simplistic and may double-render in some rare cases
+          return out;
+        }
+      }
+      // normal paragraph
+      out += `<p>${applyInline(esc(line))}</p>`;
+    }
+    if(inList) out += '</ul>';
+    return out;
+  }
+  function applyInline(str){
+    // bold **text**
+    str = str.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+    // italic *text*
+    str = str.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+    // inline code `code`
+    str = str.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // links [text](url)
+    str = str.replace(/\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, '<a class="link" href="$2" target="_blank" rel="noopener">$1</a>');
+    return str;
+  }
+
+  // --- persistence ---
+  function loadNotes(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      notes = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      notes = [];
+      console.error('Failed to load notes', e);
+    }
+    if(notes.length) activeId = notes[0].id;
+  }
+  function saveNotes(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+      lastSaveEl.textContent = 'Saved ' + new Date().toLocaleTimeString();
+    }catch(e){ console.error('Failed to save', e) }
+  }
+
+  // --- utilities ---
+  function uid(){ return Date.now().toString() + Math.random().toString(36).slice(2,6) }
+  function timeFmt(ts){ return new Date(ts).toLocaleString() }
+
+  // --- CRUD ---
+  function createNote(prefill = { title: 'New Note', body: '' }){
+    const id = uid();
+    const note = { id, title: prefill.title, body: prefill.body, updatedAt: Date.now() };
+    notes.unshift(note);
+    activeId = id;
+    scheduleSave();
+    renderAll();
+    focusEditor();
+  }
+  function updateNote(id, patch){
+    notes = notes.map(n => n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n);
+    scheduleSave();
+    renderAll(); // update list timestamps/snippets
+  }
+  function deleteNote(id){
+    notes = notes.filter(n => n.id !== id);
+    if(activeId === id){
+      activeId = notes[0] ? notes[0].id : null;
+    }
+    scheduleSave();
+    renderAll();
+  }
+  function duplicateActive(){
+    const active = notes.find(n=>n.id===activeId);
+    if(!active) return;
+    const copy = { ...active, id: uid(), title: active.title + ' (copy)', updatedAt: Date.now() };
+    notes.unshift(copy);
+    activeId = copy.id;
+    scheduleSave();
+    renderAll();
+    focusEditor();
+  }
+  function clearAll(){
+    if(!confirm('Delete all notes? This cannot be undone.')) return;
+    notes = [];
+    activeId = null;
+    localStorage.removeItem(STORAGE_KEY);
+    renderAll();
+  }
+
+  // --- render UI ---
+  function renderAll(){
+    // filtered & sorted by updatedAt desc
+    const q = (searchInput.value || '').trim().toLowerCase();
+    let list = notes.slice();
+    if(q) list = list.filter(n => (n.title + '\\n' + n.body).toLowerCase().includes(q));
+    list.sort((a,b)=>b.updatedAt - a.updatedAt);
+
+    // sidebar
+    noteListEl.innerHTML = '';
+    for (let n of list){
+      const el = document.createElement('div');
+      el.className = 'note-card' + (n.id === activeId ? ' active' : '');
+      el.innerHTML = `
+        <div style="flex:1;min-width:0">
+          <div class="note-meta">${escapeHtml(n.title || 'Untitled')}</div>
+          <div class="note-snippet">${escapeHtml((n.body||'').slice(0,120))}</div>
+        </div>
+        <div class="note-time">${new Date(n.updatedAt).toLocaleTimeString()}</div>
+      `;
+      el.addEventListener('click', () => {
+        activeId = n.id;
+        syncEditor();
+        renderAll();
+      });
+      noteListEl.appendChild(el);
+    }
+    noteCountEl.textContent = notes.length;
+
+    // editor
+    syncEditor();
+  }
+
+  function syncEditor(){
+    const active = notes.find(n=>n.id===activeId) || null;
+    if(!active){
+      editorUI.style.display = 'none';
+      emptyState.style.display = 'flex';
+      return;
+    }
+    editorUI.style.display = 'flex';
+    emptyState.style.display = 'none';
+
+    // if inputs currently focused and editing the same note, don't clobber cursor with full update
+    // but to keep things simple we'll set values (this app autosaves)
+    titleInput.value = active.title || '';
+    bodyInput.value = active.body || '';
+    noteUpdatedEl.textContent = 'Updated: ' + timeFmt(active.updatedAt);
+    previewEl.innerHTML = renderMarkdown(active.body || '');
+  }
+
+  // --- helpers ---
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+  // --- autosave debounced when user types ---
+  function scheduleSave(){
+    if(autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      saveNotes();
+      autosaveTimer = null;
+    }, DEBOUNCE);
+  }
+
+  // call when typing in editor to patch active note (debounced)
+  function onEditorChange(){
+    const id = activeId;
+    if(!id) return;
+    // update UI immediately
+    const newTitle = titleInput.value;
+    const newBody = bodyInput.value;
+    // update notes list object but don't persist synchronously
+    notes = notes.map(n => n.id === id ? { ...n, title: newTitle, body: newBody } : n);
+    // local note updatedAt will be set when debounced patch is applied
+    if(window._editorDebounce) clearTimeout(window._editorDebounce);
+    window._editorDebounce = setTimeout(() => {
+      updateNote(id, { title: newTitle, body: newBody });
+    }, DEBOUNCE);
+    // preview live
+    previewEl.innerHTML = renderMarkdown(newBody);
+    noteUpdatedEl.textContent = 'Updated: ' + (new Date().toLocaleTimeString());
+  }
+
+  // force save (Ctrl/Cmd+S)
+  function forceSave(){
+    saveNotes();
+    lastSaveEl.textContent = 'Saved manually ' + new Date().toLocaleTimeString();
+  }
+
+  function focusEditor(){
+    setTimeout(()=> titleInput.focus(), 40);
+  }
+
+  // --- event wiring ---
+  newBtn.addEventListener('click', ()=> createNote({ title:'New Note', body:'' }));
+  clearBtn.addEventListener('click', clearAll);
+  sortBtn.addEventListener('click', ()=> { notes.sort((a,b)=>b.updatedAt - a.updatedAt); renderAll(); });
+  duplicateBtn.addEventListener('click', duplicateActive);
+  deleteBtn.addEventListener('click', ()=> { if(!activeId) return; if(!confirm('Delete this note?')) return; deleteNote(activeId); });
+
+  titleInput.addEventListener('input', onEditorChange);
+  bodyInput.addEventListener('input', onEditorChange);
+
+  searchInput.addEventListener('input', ()=> renderAll());
+
+  // keyboard shortcuts
+  window.addEventListener('keydown', (e)=>{
+    const isMac = navigator.platform.toUpperCase().includes('MAC');
+    if((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'n'){
+      e.preventDefault();
+      createNote({ title:'New Note', body:'' });
+    }
+    if((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 's'){
+      e.preventDefault();
+      forceSave();
+    }
+  });
+
+  // initial load
+  loadNotes();
+  // if no notes, create a starter
+  if(!notes.length){
+    notes = [{
+      id: uid(),
+      title: 'Welcome — Try the colorful notes app!',
+      body: "This is a colorful, local-only notes app.\n\n- Press Ctrl/Cmd+N to create a new note\n- Type to auto-save (debounced)\n- Use the preview to see simple Markdown\n\n**Enjoy!**",
+      updatedAt: Date.now()
+    }];
+    activeId = notes[0].id;
+    saveNotes();
+  }
+
+  renderAll();
+  // ensure preview renders even if user hasn't typed
+  previewEl.innerHTML = renderMarkdown((notes.find(n=>n.id===activeId)||{}).body || '');
+
+})();
+</script>
+</body>
+</html>
